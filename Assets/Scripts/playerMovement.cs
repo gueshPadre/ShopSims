@@ -52,7 +52,7 @@ public class playerMovement : MonoBehaviour
     void Start()
     {
         //Hold ref to the player animator
-        myAnimator = GetComponentInChildren<Animator>();
+        //myAnimator = GetComponentInChildren<Animator>();
     }
 
     void Update()
@@ -67,8 +67,8 @@ public class playerMovement : MonoBehaviour
 
         transform.Translate(hori * Time.deltaTime * speed, vert * Time.deltaTime * speed, 0);
 
-        myAnimator.SetFloat("speed", animSpeed);
-        myAnimator.SetFloat("YSpeed", animYSpeed);
+        //myAnimator.SetFloat("speed", animSpeed);
+        //myAnimator.SetFloat("YSpeed", animYSpeed);
 
     }
 }

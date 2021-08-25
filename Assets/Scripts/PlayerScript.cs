@@ -5,11 +5,18 @@ using UnityEngine;
 public class PlayerScript : MonoBehaviour, IShopBuyer
 {
     int coins;
+    Shop shop;
+
 
 
     public int GetMyCoins()
     {
         return coins;
+    }
+
+    public void RegisterTheShop(Shop myShop)
+    {
+        shop = myShop;
     }
 
     public void SpendCoins(int coin)
@@ -26,6 +33,12 @@ public class PlayerScript : MonoBehaviour, IShopBuyer
     // Update is called once per frame
     void Update()
     {
-        
+        if(Input.GetKeyDown(KeyCode.J))
+        {
+            shop.ShopCanvas.SetActive(true);
+        }
     }
+
+
+
 }
