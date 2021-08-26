@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 public class PlayerScript : MonoBehaviour, IShopBuyer
@@ -7,16 +8,30 @@ public class PlayerScript : MonoBehaviour, IShopBuyer
     int coins;
     Shop shop;
 
+    public int Coins
+    {
+        get
+        {
+            return coins;
+        }
+        set
+        {
+            coins = value;
+            coinCanvas.GetComponentInChildren<TMP_Text>().text = $"Coins: {coins}";
+        }
+    }
+
+    [SerializeField] GameObject coinCanvas = null;
 
 
     public int GetMyCoins()
     {
-        return coins;
+        return Coins;
     }
 
     public void ReceiveCoins(float coin)
     {
-        coins += (int)coin;
+        Coins += (int)coin;
     }
 
     public void RegisterTheShop(Shop myShop)
@@ -26,20 +41,20 @@ public class PlayerScript : MonoBehaviour, IShopBuyer
 
     public void SpendCoins(int coin)
     {
-        coins -= coin;
+        Coins -= coin;
         shop.UpdateAvailableCoin();
     }
 
     // Start is called before the first frame update
     void Start()
     {
-        coins = 100;
+        Coins = 100;
     }
 
     // Update is called once per frame
     void Update()
     {
-        if(Input.GetKeyDown(KeyCode.J) && shop != null)
+        if (Input.GetKeyDown(KeyCode.J) && shop != null)
         {
             shop.ShopCanvas.SetActive(true);
         }
