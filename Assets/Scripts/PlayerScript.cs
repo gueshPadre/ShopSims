@@ -22,6 +22,7 @@ public class PlayerScript : MonoBehaviour, IShopBuyer
     public void SpendCoins(int coin)
     {
         coins -= coin;
+        shop.UpdateAvailableCoin();
     }
 
     // Start is called before the first frame update
@@ -33,7 +34,7 @@ public class PlayerScript : MonoBehaviour, IShopBuyer
     // Update is called once per frame
     void Update()
     {
-        if(Input.GetKeyDown(KeyCode.J))
+        if(Input.GetKeyDown(KeyCode.J) && shop != null)
         {
             shop.ShopCanvas.SetActive(true);
         }

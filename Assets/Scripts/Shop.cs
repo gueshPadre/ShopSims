@@ -18,7 +18,7 @@ public class Shop : MonoBehaviour
     [SerializeField] Image helmetTest;
     IShopBuyer buyer;
 
-    float itemCost;
+    int itemCost;
     public GameObject lastItemSelected { get; set; }
 
     Equipment myEquipment;
@@ -28,6 +28,8 @@ public class Shop : MonoBehaviour
     Stack<GameObject> cartStack = new Stack<GameObject>();
     [SerializeField] List<Image> emptySpaceImages = new List<Image>();
     [SerializeField] GameObject availableCoins = null;
+    [SerializeField] GameObject itCostsText = null;
+    [SerializeField] GameObject warningCanvas = null;
 
     Dictionary<GameObject, int> armorDupplicates = new Dictionary<GameObject, int>();
 
@@ -77,6 +79,7 @@ public class Shop : MonoBehaviour
         interactionCanvas.gameObject.SetActive(false);
         shopCanvas.SetActive(false);
         shopKeeper.GetComponentInChildren<Animator>().SetBool("isInShop", false);
+        ResetStore();
     }
 
     #region choosing Colors
@@ -87,68 +90,59 @@ public class Shop : MonoBehaviour
     public void ChooseChestColorWhite()
     {
         chestTest.color = Color.white;
-        itemCost = 30f;
         myEquipment = Equipment.Chest;
-        //SkinHandler.Instance.ChangeColor(Shop.Equipment.Chest, Color.white);
     }
 
     public void ChooseChestColorRed()
     {
         chestTest.color = Color.red;
-        itemCost = 50f;
         myEquipment = Equipment.Chest;
-        //SkinHandler.Instance.ChangeColor(Shop.Equipment.Chest, Color.red);
     }
 
     public void ChooseChestColorGreen()
     {
         chestTest.color = Color.green;
-        itemCost = 60f;
         myEquipment = Equipment.Chest;
-        //SkinHandler.Instance.ChangeColor(Shop.Equipment.Chest, Color.green);
     }
 
     public void ChooseChestColorTeal()
     {
         chestTest.color = Color.cyan;
-        itemCost = 100f;
         myEquipment = Equipment.Chest;
-        //SkinHandler.Instance.ChangeColor(Shop.Equipment.Chest, Color.cyan);
     }
 
     public void ChooseHelmetColorWhite()
     {
         helmetTest.color = Color.white;
-        itemCost = 45f;
         myEquipment = Equipment.Helmet;
-        //SkinHandler.Instance.ChangeColor(Shop.Equipment.Helmet, Color.white);
     }
 
     public void ChooseHelmetColorRed()
     {
         helmetTest.color = Color.red;
-        itemCost = 65f;
         myEquipment = Equipment.Helmet;
-        //SkinHandler.Instance.ChangeColor(Shop.Equipment.Helmet, Color.red);
     }
 
     public void ChooseHelmetColorGreen()
     {
         helmetTest.color = Color.green;
-        itemCost = 75f;
         myEquipment = Equipment.Helmet;
-        //SkinHandler.Instance.ChangeColor(Shop.Equipment.Helmet, Color.green);
     }
 
     public void ChooseHelmetColorTeal()
     {
         helmetTest.color = Color.cyan;
-        itemCost = 125f;
         myEquipment = Equipment.Helmet;
-        //SkinHandler.Instance.ChangeColor(Shop.Equipment.Helmet, Color.cyan);
     }
 
     #endregion
+
+
+    public void UpdateAvailableCoin()
+    {
+        availableCoins.GetComponent<TMP_Text>().text = $"You have {buyer.GetMyCoins()} coins available";
+    }
+
 
 
     /// <summary>
@@ -160,11 +154,13 @@ public class Shop : MonoBehaviour
         {
             cartStack.Push(lastItemSelected);
             armorDupplicates.Add(lastItemSelected, 1);  // initialize the amount to 1
-            Debug.Log($"{lastItemSelected.name} was added to the cart");
             GameObject spot = GetEmptySpot();
             spot.GetComponent<Image>().sprite = lastItemSelected.GetComponent<Image>().sprite;
             spot.GetComponent<Image>().color = lastItemSelected.GetComponent<Image>().color;
+
+            Debug.Log($"{itemCost} is how many I have before");
             itemCost += lastItemSelected.GetComponent<SelectedItem>().myPrice;
+            Debug.Log($"{itemCost} is how many I have after");
         }
         else if (lastItemSelected != null && cartStack.Contains(lastItemSelected))  //Add a multiple of one item
         {
@@ -199,8 +195,16 @@ public class Shop : MonoBehaviour
         }
         else    //Nothing was selected
         {
-
+            GameObject sign = Instantiate(warningCanvas);
+            Destroy(sign, 4f);  // destroy the sign after the animation 
         }
+        UpdateCost();
+    }
+
+    void UpdateCost()
+    {
+        itCostsText.GetComponent<TMP_Text>().text = $"It costs {itemCost} coins";
+        itCostsText.SetActive(true);
     }
 
 
@@ -210,7 +214,8 @@ public class Shop : MonoBehaviour
     /// <param name="index">index of a selected item</param>
     public void RemoveOneFromCart(int index)
     {
-        Image[] children = emptySpaceImages[index-1].GetComponentsInChildren<Image>();
+        if (emptySpaceImages[index - 1].GetComponent<Image>().color.a == 0) { return; }  // if not displayed, don't do anything
+        Image[] children = emptySpaceImages[index - 1].GetComponentsInChildren<Image>();
         foreach (var child in children)
         {
             if (child.GetComponentInChildren<Text>())
@@ -219,7 +224,7 @@ public class Shop : MonoBehaviour
                 previousAmount--;
 
                 //If we removed all of the dupplicates
-                if(previousAmount == 0)
+                if (previousAmount == 0)
                 {
                     Color old = child.GetComponentInChildren<Text>().color;
                     old.a = 0;
@@ -234,13 +239,26 @@ public class Shop : MonoBehaviour
                         c.a = 0;
                         children[i].color = c;
                     }
+                    lastItemSelected = null;
                     break;
                 }
                 child.GetComponentInChildren<Text>().text = previousAmount.ToString();
                 break;
             }
         }
+        itemCost -= lastItemSelected.GetComponent<SelectedItem>().myPrice;
+        UpdateCost();
     }
+
+    /// <summary>
+    /// Back from the store
+    /// </summary>
+    public void GoBack()
+    {
+        ResetStore();
+        shopCanvas.SetActive(false);
+    }
+
 
     /// <summary>
     /// Get the next empty image spot
@@ -258,9 +276,32 @@ public class Shop : MonoBehaviour
     }
 
 
+    /// <summary>
+    /// After purchasing an item, just reset the store
+    /// </summary>
+    void ResetStore()
+    {
+        for (int i = 0; i < emptySpaceImages.Count; i++)
+        {
+            emptySpaceImages[i].sprite = null;
+            Color a = emptySpaceImages[i].color;
+            a.a = 0f;
+            emptySpaceImages[i].color = a;
+        }
+        itemCost = 0;
+        itCostsText.SetActive(false);
+    }
+
 
     public void BuyItem()
     {
+        if (!cartStack.Contains(lastItemSelected)) 
+        {
+            // show warning if nothing in Cart
+            GameObject sign = Instantiate(warningCanvas);
+            Destroy(sign, 4f);  // destroy the sign after the animation 
+            return; 
+        }   
         if (CanBuy())
         {
             if (myEquipment == Equipment.Chest)
@@ -271,6 +312,9 @@ public class Shop : MonoBehaviour
             {
                 OnBoughtItem?.Invoke(myEquipment, helmetTest.color);
             }
+
+            ResetStore();
+            shopCanvas.SetActive(false);
         }
         else
         {
@@ -284,7 +328,11 @@ public class Shop : MonoBehaviour
         {
             return false;
         }
-        else return true;
+        else
+        {
+            buyer.SpendCoins((int)itemCost);
+            return true;
+        }
     }
 
 
