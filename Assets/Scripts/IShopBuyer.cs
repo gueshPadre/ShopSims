@@ -5,4 +5,7 @@ public interface IShopBuyer
     void SpendCoins(int coin);
 
     void RegisterTheShop(Shop myShop);
+
+    void ReceiveCoins(float coins);
+
 }

@@ -10,6 +10,7 @@ public class Shop : MonoBehaviour
 {
     [SerializeField] GameObject shopKeeper = null;      // Reference to the NPC shopkeeper
     [SerializeField] GameObject shopCanvas = null;      // Reference to ShopCanvas
+    [SerializeField] GameObject sellCanvas = null;      // Reference to SellCanvas
     Canvas interactionCanvas;
 
     public GameObject ShopCanvas { get { return shopCanvas; } private set { shopCanvas = value; } }     //Turn on and off the Shopping canvas
@@ -20,18 +21,25 @@ public class Shop : MonoBehaviour
 
     int itemCost;
     public GameObject lastItemSelected { get; set; }
+    public GameObject lastItemSelectedToSell { get; set; }
 
     Equipment myEquipment;
 
     public Action<Equipment, Color> OnBoughtItem;
 
-    Stack<GameObject> cartStack = new Stack<GameObject>();
+    List<GameObject> cartList = new List<GameObject>();
+    List<GameObject> ownedList = new List<GameObject>();
     [SerializeField] List<Image> emptySpaceImages = new List<Image>();
     [SerializeField] GameObject availableCoins = null;
     [SerializeField] GameObject itCostsText = null;
     [SerializeField] GameObject warningCanvas = null;
 
+    [SerializeField] List<Image> emptySellImages = new List<Image>();
+
+
     Dictionary<GameObject, int> armorDupplicates = new Dictionary<GameObject, int>();
+
+    int lastAmountToGive;
 
 
 
@@ -150,21 +158,19 @@ public class Shop : MonoBehaviour
     /// </summary>
     public void AddToCart()
     {
-        if (lastItemSelected != null && !cartStack.Contains(lastItemSelected))  //Add a new Item in the cart
+        if (lastItemSelected != null && !cartList.Contains(lastItemSelected))  //Add a new Item in the cart
         {
-            cartStack.Push(lastItemSelected);
+            cartList.Add(lastItemSelected);
             armorDupplicates.Add(lastItemSelected, 1);  // initialize the amount to 1
             GameObject spot = GetEmptySpot();
             spot.GetComponent<Image>().sprite = lastItemSelected.GetComponent<Image>().sprite;
             spot.GetComponent<Image>().color = lastItemSelected.GetComponent<Image>().color;
 
-            Debug.Log($"{itemCost} is how many I have before");
             itemCost += lastItemSelected.GetComponent<SelectedItem>().myPrice;
-            Debug.Log($"{itemCost} is how many I have after");
         }
-        else if (lastItemSelected != null && cartStack.Contains(lastItemSelected))  //Add a multiple of one item
+        else if (lastItemSelected != null && cartList.Contains(lastItemSelected))  //Add a multiple of one item
         {
-            cartStack.Push(lastItemSelected);
+            cartList.Add(lastItemSelected);
             armorDupplicates[lastItemSelected]++;
             Image dupplicate = null;
             for (int i = 0; i < emptySpaceImages.Count; i++)
@@ -246,7 +252,10 @@ public class Shop : MonoBehaviour
                 break;
             }
         }
-        itemCost -= lastItemSelected.GetComponent<SelectedItem>().myPrice;
+        if (lastItemSelected.GetComponent<SelectedItem>())
+        {
+            itemCost -= lastItemSelected.GetComponent<SelectedItem>().myPrice; 
+        }
         UpdateCost();
     }
 
@@ -295,7 +304,7 @@ public class Shop : MonoBehaviour
 
     public void BuyItem()
     {
-        if (!cartStack.Contains(lastItemSelected)) 
+        if (!cartList.Contains(lastItemSelected)) 
         {
             // show warning if nothing in Cart
             GameObject sign = Instantiate(warningCanvas);
@@ -313,6 +322,7 @@ public class Shop : MonoBehaviour
                 OnBoughtItem?.Invoke(myEquipment, helmetTest.color);
             }
 
+            ownedList.Add(lastItemSelected);
             ResetStore();
             shopCanvas.SetActive(false);
         }
@@ -335,5 +345,61 @@ public class Shop : MonoBehaviour
         }
     }
 
+    public void GoToSellMenu()
+    {
+        //Display all the owned armor
+        for (int i = 0; i < ownedList.Count; i++)
+        {
+            if(emptySellImages[i].sprite == null)   //not checking if i exists because it'll always be lower than the inventory we have
+            {
+                emptySellImages[i].sprite = ownedList[i].GetComponent<Image>().sprite;
+                emptySellImages[i].color = ownedList[i].GetComponent<Image>().color;
+            }
+        }
+        sellCanvas.SetActive(true);
+        shopCanvas.SetActive(false);
+    }
+
+    public void BackToShop()
+    {
+        UpdateAvailableCoin();
+        sellCanvas.SetActive(false);
+        shopCanvas.SetActive(true);
+    }
+
+    public float CheckAmount(GameObject armor)
+    {
+        for (int i = 0; i < ownedList.Count; i++)
+        {
+            //Compares the color
+            if(armor.GetComponent<Image>().color == ownedList[i].GetComponent<Image>().color)
+            {
+                float cashBack = ownedList[i].GetComponent<SelectedItem>().myPrice / 2;
+                lastAmountToGive = (int)cashBack;
+                return cashBack;
+            }
+        }
+        return 0;
+    }
+
+
+    public void Sell()
+    {
+        for (int i = 0; i < ownedList.Count; i++)
+        {
+            if (ownedList[i].GetComponent<Image>().sprite == lastItemSelectedToSell.GetComponent<Image>().sprite)
+            {
+                lastItemSelectedToSell.GetComponent<Image>().sprite = null;
+                Color temp = lastItemSelectedToSell.GetComponent<Image>().color;
+                temp.a = 0;
+                lastItemSelectedToSell.GetComponent<Image>().color = temp;
+                buyer.ReceiveCoins(lastAmountToGive);
+                lastAmountToGive = 0;   // reset the amount
+                ownedList.RemoveAt(i);
+                break;
+            } 
+        }
+        BackToShop();
+    }
 
 }

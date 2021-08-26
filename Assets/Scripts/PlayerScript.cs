@@ -14,6 +14,11 @@ public class PlayerScript : MonoBehaviour, IShopBuyer
         return coins;
     }
 
+    public void ReceiveCoins(float coin)
+    {
+        coins += (int)coin;
+    }
+
     public void RegisterTheShop(Shop myShop)
     {
         shop = myShop;
