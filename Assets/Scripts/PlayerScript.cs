@@ -27,7 +27,7 @@ public class PlayerScript : MonoBehaviour, IShopBuyer
     // Start is called before the first frame update
     void Start()
     {
-        coins = 10;
+        coins = 100;
     }
 
     // Update is called once per frame

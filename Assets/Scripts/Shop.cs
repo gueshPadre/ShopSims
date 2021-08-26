@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -18,10 +19,18 @@ public class Shop : MonoBehaviour
     IShopBuyer buyer;
 
     float itemCost;
+    public GameObject lastItemSelected { get; set; }
 
     Equipment myEquipment;
 
     public Action<Equipment, Color> OnBoughtItem;
+
+    Stack<GameObject> cartStack = new Stack<GameObject>();
+    [SerializeField] List<Image> emptySpaceImages = new List<Image>();
+    [SerializeField] GameObject availableCoins = null;
+
+    Dictionary<GameObject, int> armorDupplicates = new Dictionary<GameObject, int>();
+
 
 
     public enum Equipment
@@ -49,7 +58,16 @@ public class Shop : MonoBehaviour
             buyer.RegisterTheShop(this);
             shopKeeper.GetComponentInChildren<Animator>().SetBool("isInShop", true);
             interactionCanvas.gameObject.SetActive(true);
-            Debug.Log($"You've just entered possibly the shop with {buyer.GetMyCoins()} coins");
+
+            // Quick check for plural spelling if more than one coin
+            if (buyer.GetMyCoins() > 1)
+            {
+                availableCoins.GetComponent<TMP_Text>().text = $"You have {buyer.GetMyCoins()} coins available";
+            }
+            else
+            {
+                availableCoins.GetComponent<TMP_Text>().text = $"You have {buyer.GetMyCoins()} coin available";
+            }
         }
     }
 
@@ -131,6 +149,115 @@ public class Shop : MonoBehaviour
     }
 
     #endregion
+
+
+    /// <summary>
+    /// Add the last item selected to the cart and shows it on the side
+    /// </summary>
+    public void AddToCart()
+    {
+        if (lastItemSelected != null && !cartStack.Contains(lastItemSelected))  //Add a new Item in the cart
+        {
+            cartStack.Push(lastItemSelected);
+            armorDupplicates.Add(lastItemSelected, 1);  // initialize the amount to 1
+            Debug.Log($"{lastItemSelected.name} was added to the cart");
+            GameObject spot = GetEmptySpot();
+            spot.GetComponent<Image>().sprite = lastItemSelected.GetComponent<Image>().sprite;
+            spot.GetComponent<Image>().color = lastItemSelected.GetComponent<Image>().color;
+            itemCost += lastItemSelected.GetComponent<SelectedItem>().myPrice;
+        }
+        else if (lastItemSelected != null && cartStack.Contains(lastItemSelected))  //Add a multiple of one item
+        {
+            cartStack.Push(lastItemSelected);
+            armorDupplicates[lastItemSelected]++;
+            Image dupplicate = null;
+            for (int i = 0; i < emptySpaceImages.Count; i++)
+            {
+                if (emptySpaceImages[i].sprite == lastItemSelected.GetComponent<Image>().sprite)
+                {
+                    dupplicate = emptySpaceImages[i];
+                    break;
+                }
+            }
+
+            // Turning the dupplicate sign on
+            Image[] dupplicateSprites = dupplicate.GetComponentsInChildren<Image>();
+            for (int i = 0; i < dupplicateSprites.Length; i++)
+            {
+                if (dupplicateSprites[i].GetComponentInChildren<Text>())     //if it has a text as children
+                {
+                    Color color = dupplicateSprites[i].GetComponentInChildren<Text>().color;
+                    color.a = 100f;
+                    dupplicateSprites[i].GetComponentInChildren<Text>().color = color;
+                    dupplicateSprites[i].GetComponentInChildren<Text>().text = armorDupplicates[lastItemSelected].ToString();
+                }
+                Color imageColor = dupplicateSprites[i].color;
+                imageColor.a = 100f;
+                dupplicateSprites[i].color = imageColor;
+            }
+            itemCost += lastItemSelected.GetComponent<SelectedItem>().myPrice;
+        }
+        else    //Nothing was selected
+        {
+
+        }
+    }
+
+
+    /// <summary>
+    /// Remove one item selected from the cart
+    /// </summary>
+    /// <param name="index">index of a selected item</param>
+    public void RemoveOneFromCart(int index)
+    {
+        Image[] children = emptySpaceImages[index-1].GetComponentsInChildren<Image>();
+        foreach (var child in children)
+        {
+            if (child.GetComponentInChildren<Text>())
+            {
+                int previousAmount = int.Parse(child.GetComponentInChildren<Text>().text);
+                previousAmount--;
+
+                //If we removed all of the dupplicates
+                if(previousAmount == 0)
+                {
+                    Color old = child.GetComponentInChildren<Text>().color;
+                    old.a = 0;
+                    child.GetComponentInChildren<Text>().color = old;
+                    emptySpaceImages[index - 1].GetComponent<Image>().sprite = null;
+                    Color a = emptySpaceImages[index - 1].GetComponent<Image>().color;
+                    a.a = 0;
+                    emptySpaceImages[index - 1].GetComponent<Image>().color = a;
+                    for (int i = 0; i < children.Length; i++)
+                    {
+                        Color c = children[i].color;
+                        c.a = 0;
+                        children[i].color = c;
+                    }
+                    break;
+                }
+                child.GetComponentInChildren<Text>().text = previousAmount.ToString();
+                break;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Get the next empty image spot
+    /// </summary>
+    GameObject GetEmptySpot()
+    {
+        for (int i = 0; i < emptySpaceImages.Count; i++)
+        {
+            if (emptySpaceImages[i].sprite == null)
+            {
+                return emptySpaceImages[i].gameObject;
+            }
+        }
+        return null;    // no empty space were found.
+    }
+
+
 
     public void BuyItem()
     {

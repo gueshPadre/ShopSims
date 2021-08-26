@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class SkinHandler : MonoBehaviour
 {
-    [SerializeField] List<GameObject> skinGo = null;
+    //[SerializeField] List<GameObject> skinGo = null;
 
     public static SkinHandler Instance;
     [SerializeField] GameObject player;
