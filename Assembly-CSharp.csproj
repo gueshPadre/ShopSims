@@ -63,9 +63,8 @@
     <Compile Include="Assets\Scripts\PlayerScript.cs" />
     <Compile Include="Assets\Scripts\SelectedItem.cs" />
     <Compile Include="Assets\Scripts\OnPointerDown.cs" />
-    <Compile Include="Assets\ItemsToSell.cs" />
-    <Compile Include="Assets\CoinBag.cs" />
-    <Compile Include="Assets\QuitGame.cs" />
+    <Compile Include="Assets\Scripts\ItemsToSell.cs" />
+    <Compile Include="Assets\Scripts\QuitGame.cs" />
   </ItemGroup>
   <ItemGroup>
      <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />

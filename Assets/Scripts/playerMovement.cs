@@ -6,15 +6,9 @@ public class playerMovement : MonoBehaviour
 {
     [SerializeField] float speed = 3f;
 
-    float animSpeed;    //The float condition of the animator for the horizontal movement
-    float animYSpeed;   //The float condition of the animator for the vertical movement
-
     float hori;
     float vert;
 
-    /// <summary>
-    /// Change the animator speed when the horizontal movement changes
-    /// </summary>
     public float Horizontal
     {
         get
@@ -23,15 +17,11 @@ public class playerMovement : MonoBehaviour
         }
         set
         {
-            animSpeed = value;
             hori = value;
         }
     }
 
 
-    /// <summary>
-    /// Change the animator speed when the vertical movement changes
-    /// </summary>
     public float Vertical
     {
         get
@@ -41,19 +31,10 @@ public class playerMovement : MonoBehaviour
         }
         set
         {
-            animYSpeed = value;
             vert = value;
         }
     }
-
     
-    Animator myAnimator;
-
-    void Start()
-    {
-        //Hold ref to the player animator
-        //myAnimator = GetComponentInChildren<Animator>();
-    }
 
     void Update()
     {
@@ -66,9 +47,5 @@ public class playerMovement : MonoBehaviour
         Vertical = Input.GetAxisRaw("Vertical");
 
         transform.Translate(hori * Time.deltaTime * speed, vert * Time.deltaTime * speed, 0);
-
-        //myAnimator.SetFloat("speed", animSpeed);
-        //myAnimator.SetFloat("YSpeed", animYSpeed);
-
     }
 }

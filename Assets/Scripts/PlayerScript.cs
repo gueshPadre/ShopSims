@@ -8,6 +8,10 @@ public class PlayerScript : MonoBehaviour, IShopBuyer
     int coins;
     Shop shop;
 
+    float timer;
+    float timePeriod = 5f;
+
+
     public int Coins
     {
         get
@@ -57,6 +61,13 @@ public class PlayerScript : MonoBehaviour, IShopBuyer
         if (Input.GetKeyDown(KeyCode.J) && shop != null)
         {
             shop.ShopCanvas.SetActive(true);
+        }
+
+        timer += Time.deltaTime;
+        if(timer >= timePeriod)
+        {
+            Coins += 50;
+            timer = 0f;     // Reset the timer
         }
     }
 
